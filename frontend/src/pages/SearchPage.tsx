@@ -63,7 +63,7 @@ export default function SearchPage() {
         data.length <= 3 &&
         data.some((book) => book.title.includes("JavaScript"))
       ) {
-        setUsingMockData(true);
+        setUsingMockData(false);
       }
     } catch (err) {
       setError("Something went wrong while searching for books");
