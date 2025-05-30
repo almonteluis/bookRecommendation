@@ -2,6 +2,7 @@ import { useState } from "react";
 import SearchBar from "../components/SearchBar";
 import BookCard from "../components/BookCard";
 import { searchBooks } from "../api/books";
+import { useRatings } from "../hooks/useRatings";
 import { type Book } from "../types";
 
 export default function SearchPage() {
@@ -10,6 +11,14 @@ export default function SearchPage() {
   const [error, setError] = useState("");
   const [usingMockData, setUsingMockData] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+
+  const {
+    submitRating,
+    getUserRating,
+    getBookRatingStats,
+    ratings,
+    ratingStats,
+  } = useRatings();
 
   const handleSearch = async (query: string) => {
     setLoading(true);
@@ -20,7 +29,35 @@ export default function SearchPage() {
     try {
       const data = await searchBooks(query);
       console.log(`Fetched ${data.length} books`);
-      setBooks(data);
+
+      // Enhance books with rating data
+      const enhancedBooks = await Promise.all(
+        data.map(async (book) => {
+          try {
+            // Get user rating and stats for each book
+            const [userRating, stats] = await Promise.all([
+              getUserRating(book.id),
+              getBookRatingStats(book.id),
+            ]);
+
+            return {
+              ...book,
+              userRating: userRating?.rating || 0,
+              averageRating: stats.averageRating,
+              totalRatings: stats.totalRatings,
+            };
+          } catch (err) {
+            console.error(
+              `Failed to get rating data for book ${book.id}:`,
+              err
+            );
+            return book;
+          }
+        })
+      );
+
+      setBooks(enhancedBooks);
+
       // Check if we're likely using mock data (small fixed set)
       if (
         data.length <= 3 &&
@@ -32,6 +69,31 @@ export default function SearchPage() {
       setError("Something went wrong while searching for books");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRatingChange = async (bookId: string, rating: number) => {
+    try {
+      await submitRating(bookId, rating);
+
+      // Update the book in the current list with new rating data
+      setBooks((prevBooks) =>
+        prevBooks.map((book) =>
+          book.id === bookId
+            ? {
+                ...book,
+                userRating: rating,
+                averageRating:
+                  ratingStats[bookId]?.averageRating || book.averageRating,
+                totalRatings:
+                  ratingStats[bookId]?.totalRatings || book.totalRatings,
+              }
+            : book
+        )
+      );
+    } catch (err) {
+      console.error("Failed to submit rating:", err);
+      // You could show a toast notification here
     }
   };
 
@@ -197,7 +259,10 @@ export default function SearchPage() {
                       className="animate-fade-in-scale"
                       style={{ animationDelay: `${index * 0.1}s` }}
                     >
-                      <BookCard book={book} />
+                      <BookCard
+                        book={book}
+                        onRatingChange={handleRatingChange}
+                      />
                     </div>
                   ))}
                 </div>

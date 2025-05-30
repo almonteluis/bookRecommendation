@@ -1,6 +1,8 @@
 import { type BookCardProps } from "../types";
+import StarRating from "./StarRating";
+import RatingStats from "./RatingStats";
 
-export default function BookCard({ book }: BookCardProps) {
+export default function BookCard({ book, onRatingChange }: BookCardProps) {
   const handleClick = () => {
     // Future: Navigate to book details or add to favorites
     console.log(`Clicked on book: ${book.title}`);
@@ -10,6 +12,12 @@ export default function BookCard({ book }: BookCardProps) {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       handleClick();
+    }
+  };
+
+  const handleRatingChange = (rating: number) => {
+    if (onRatingChange) {
+      onRatingChange(book.id, rating);
     }
   };
 
@@ -109,6 +117,33 @@ export default function BookCard({ book }: BookCardProps) {
                 </p>
               </div>
             )}
+
+            {/* Rating Section */}
+            <div className="mb-4 space-y-2">
+              {/* User Rating */}
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-1">
+                  Your Rating:
+                </p>
+                <StarRating
+                  rating={book.userRating || 0}
+                  onRatingChange={handleRatingChange}
+                  size="sm"
+                />
+              </div>
+
+              {/* Average Rating Stats */}
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-1">
+                  Community:
+                </p>
+                <RatingStats
+                  averageRating={book.averageRating}
+                  totalRatings={book.totalRatings}
+                  size="sm"
+                />
+              </div>
+            </div>
 
             {/* Book Details */}
             <div className="mt-auto space-y-2">
