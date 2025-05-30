@@ -1,8 +1,10 @@
 import { useState } from "react";
 import SearchBar from "../components/SearchBar";
 import BookCard from "../components/BookCard";
+import Toast from "../components/Toast";
 import { searchBooks } from "../api/books";
 import { useRatings } from "../hooks/useRatings";
+import { useToast } from "../hooks/useToast";
 import { type Book } from "../types";
 
 export default function SearchPage() {
@@ -19,6 +21,8 @@ export default function SearchPage() {
     ratings,
     ratingStats,
   } = useRatings();
+
+  const { toast, showSuccess, showError, hideToast, clearToast } = useToast();
 
   const handleSearch = async (query: string) => {
     setLoading(true);
@@ -91,14 +95,27 @@ export default function SearchPage() {
             : book
         )
       );
+
+      // Show success message
+      showSuccess(`Rated ${rating} star${rating !== 1 ? "s" : ""}!`);
     } catch (err) {
       console.error("Failed to submit rating:", err);
-      // You could show a toast notification here
+      showError("Failed to submit rating. Please try again.");
     }
   };
 
   return (
     <div className="min-h-screen relative">
+      {/* Toast Notifications */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          isVisible={toast.isVisible}
+          onClose={clearToast}
+        />
+      )}
+
       {/* Hero Section */}
       <div className="relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">

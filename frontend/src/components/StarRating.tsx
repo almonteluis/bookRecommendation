@@ -7,7 +7,8 @@ export default function StarRating({
   readonly = false,
   size = "md",
   showValue = false,
-}: StarRatingProps) {
+  isLoading = false,
+}: StarRatingProps & { isLoading?: boolean }) {
   const [hoveredRating, setHoveredRating] = useState(0);
 
   const sizeClasses = {
@@ -17,36 +18,37 @@ export default function StarRating({
   };
 
   const handleStarClick = (starRating: number) => {
-    if (!readonly && onRatingChange) {
+    if (!readonly && !isLoading && onRatingChange) {
       onRatingChange(starRating);
     }
   };
 
   const handleStarHover = (starRating: number) => {
-    if (!readonly) {
+    if (!readonly && !isLoading) {
       setHoveredRating(starRating);
     }
   };
 
   const handleMouseLeave = () => {
-    if (!readonly) {
+    if (!readonly && !isLoading) {
       setHoveredRating(0);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, starRating: number) => {
-    if (!readonly && (e.key === "Enter" || e.key === " ")) {
+    if (!readonly && !isLoading && (e.key === "Enter" || e.key === " ")) {
       e.preventDefault();
       handleStarClick(starRating);
     }
   };
 
   const displayRating = hoveredRating || rating;
+  const isDisabled = readonly || isLoading;
 
   return (
     <div className="flex items-center gap-1">
       <div
-        className="flex items-center gap-0.5"
+        className={`flex items-center gap-0.5 ${isLoading ? "opacity-50" : ""}`}
         onMouseLeave={handleMouseLeave}
         role={readonly ? "img" : "radiogroup"}
         aria-label={
@@ -55,29 +57,32 @@ export default function StarRating({
       >
         {[1, 2, 3, 4, 5].map((star) => {
           const isFilled = star <= displayRating;
-          const isHovered = !readonly && star <= hoveredRating;
+          const isHovered = !isDisabled && star <= hoveredRating;
 
           return (
             <button
               key={star}
               type="button"
-              disabled={readonly}
+              disabled={isDisabled}
               onClick={() => handleStarClick(star)}
               onMouseEnter={() => handleStarHover(star)}
               onKeyDown={(e) => handleKeyDown(e, star)}
               className={`
                 ${
-                  readonly ? "cursor-default" : "cursor-pointer hover:scale-110"
+                  isDisabled
+                    ? "cursor-default"
+                    : "cursor-pointer hover:scale-110"
                 }
                 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 rounded
-                ${!readonly ? "active:scale-95" : ""}
+                ${!isDisabled ? "active:scale-95" : ""}
+                ${isLoading ? "pointer-events-none" : ""}
               `}
               aria-label={
                 readonly
                   ? undefined
                   : `Rate ${star} star${star !== 1 ? "s" : ""}`
               }
-              tabIndex={readonly ? -1 : 0}
+              tabIndex={isDisabled ? -1 : 0}
             >
               <svg
                 className={`
@@ -101,6 +106,13 @@ export default function StarRating({
             </button>
           );
         })}
+
+        {/* Loading spinner */}
+        {isLoading && (
+          <div className="ml-2">
+            <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        )}
       </div>
 
       {showValue && (

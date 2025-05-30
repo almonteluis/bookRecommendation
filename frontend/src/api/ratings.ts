@@ -2,18 +2,10 @@ import { type Rating } from "../types";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5004";
 
-// Debug logging
-console.log("🔧 Rating API Configuration:", {
-  VITE_API_URL: import.meta.env.VITE_API_URL,
-  API_BASE_URL,
-  fullRatingURL: `${API_BASE_URL}/api/ratings`,
-});
-
 export const ratingsApi = {
   // Submit or update a rating
   submitRating: async (bookId: string, rating: number): Promise<Rating> => {
     const url = `${API_BASE_URL}/api/ratings`;
-    console.log("📤 Submitting rating to:", url);
 
     const response = await fetch(url, {
       method: "POST",
@@ -27,15 +19,8 @@ export const ratingsApi = {
       }),
     });
 
-    console.log(
-      "📥 Rating submission response:",
-      response.status,
-      response.statusText
-    );
-
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("❌ Rating submission failed:", errorText);
       throw new Error(
         `Failed to submit rating: ${response.statusText} - ${errorText}`
       );
